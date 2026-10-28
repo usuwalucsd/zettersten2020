@@ -1,6 +1,9 @@
  
 /**
  * Author: Urvi Suwal
+ * Replication of Sampling to Learn Words: Experiment S1 (Zettersten & Saffran, 2020)
+ * Modifications: added additional sampling blocks to examine whether or not sampling behavior 
+ * changes across time 
  */
 
 var jsPsych = initJsPsych({
@@ -261,18 +264,19 @@ var postTrainingTestPhase = make_test_phase(
 var postSamplingTestPhase = make_test_phase(
   `Now we will test how well you learned the words again. Just like before, you will see a name and be asked to choose which of the eight pictured aliens goes with the name. In each trial, click START. The name for one of the aliens will appear on the screen. Click on the alien you think the name refers to. Click NEXT to get started.`,);
 
-// EXPERIMENT TIMELINE
+// ------------------------------------------------  EXPERIMENT TIMELINE  -----------------------------------------------------------------
 timeline.push(preload);
+
+// direct replication of experiment s1  
 timeline = timeline.concat(instructionsAttentionCheck); // general instructions + audio check trials
 timeline = timeline.concat(trainingPhase);
 timeline = timeline.concat(postTrainingTestPhase); 
+
+// exploratory: these are the additonal blocks added after the full s1
 timeline = timeline.concat(samplingPhase);
 timeline = timeline.concat(postSamplingTestPhase);
 timleine = timeline.concat(samplingPhase); 
 timeline = timeline.concat(postSamplingTestPhase);
-
-
-
 
 
 jsPsych.run(timeline);
