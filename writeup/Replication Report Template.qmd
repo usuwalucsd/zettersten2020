@@ -89,17 +89,135 @@ Data preparation following the analysis plan.
 ### Data Preparation
 
 #### Load Relevant Libraries and Functions
+library(ggplot2)
+library(tidyverse)
+library(lme4)
+library(here)
 
 #### Import data
+d <- read.csv("Zettersten2020_preprocessed_data.csv")
 
 #### Data exclusion / filtering
 
 #### Prepare data for analysis - create columns etc.
 ```
 
+
 ### Confirmatory analysis
 
+```{r}
+# sampling phase: Descriptives
+active_sampling_bysubject <- d %>%
+  filter(trial_type == "sampling" & round_condition == "active") %>%
+  group_by(subject_id, round_condition) %>%
+  summarize(
+    prop_ambiguous = mean(chosen_item_condition == "ambiguous"),
+    .groups = "drop")
+
+active_sampling_summary <- active_sampling_bysubject %>%
+  group_by(round_condition) %>%
+  summarize(
+    N = n(),
+    mean_ambiguous = mean(prop_ambiguous),
+    sd_ambiguous = sd(prop_ambiguous),
+    ci_ambiguous = qt(0.975, N - 1) * sd_ambiguous / sqrt(N),
+    mean_ambiguous_lower_ci = mean_ambiguous - ci_ambiguous,
+    mean_ambiguous_upper_ci = mean_ambiguous + ci_ambiguous,
+    .groups = "drop")
+active_sampling_summary
+```
+
 The analyses as specified in the analysis plan.  
+```{r}
+# sampling choices logistics mixed effects regression
+d <- d %>%
+  mutate(ambiguous_selection = ifelse(chosen_item_condition == "ambiguous", 1, 0))
+
+# participant = subject_id; item = chosen_image
+model <- glmer(ambiguous_selection ~ 1 + (1|subject_id) + (1|chosen_image),
+               data = filter(d, trial_type == "sampling" & round_condition == "active"),
+               family = binomial,
+               control = glmerControl(optimizer = "bobyqa", check.conv.singular = "ignore"))
+summary(model)
+confint(model, parm = "(Intercept)", method = "Wald")
+
+wilcox.test(active_sampling_bysubject$prop_ambiguous, mu = 0.5)
+
+# Figure 1a
+model_prediction_sampling <- data.frame(ambiguity_condition = "ambiguous")
+predicted_y <- predictSE(model, model_prediction_sampling, type = "response")
+model_prediction_sampling <- model_prediction_sampling %>%
+  mutate(
+    prop_ambiguous = predicted_y$fit,
+    prop_ambiguous_lower_ci = predicted_y$fit - 1.96 * predicted_y$se.fit,
+    prop_ambiguous_upper_ci = predicted_y$fit + 1.96 * predicted_y$se.fit)
+
+sampling_figure <- ggplot(model_prediction_sampling,
+                          aes(x = 'Experiment 1', y = prop_ambiguous)) +
+  geom_bar(stat = "identity", linewidth = 2.5, width = 0.5) +
+  geom_dotplot(data = all_subjects_sampling, aes(y = prop_ambiguous),
+               binaxis = "y", stackdir = "center", alpha = 0.5, dotsize = 0.6) +
+  geom_errorbar(aes(ymin = prop_ambiguous_lower_ci, ymax = prop_ambiguous_upper_ci),width = 0.1) +
+  geom_hline(yintercept = 0.5, linetype = "dotted")+ # chance 50%
+  ylab("Probability of Ambiguous Selection") +
+  theme_classic() +
+  theme(legend.position = "none")
+sampling_figure
+
+```
+
+```{r}
+# testing phase: descriptives 
+test_active_sampling <- d %>%
+  filter(trial_type == "comprehension_test", round_condition == "active") %>%
+  mutate(
+    correct = as.numeric(correct),
+    targetIsAmbiguousYN = ifelse(target_item_condition == "ambiguous", "yes", "no"),
+    targetIsAmbiguousC  = ifelse(target_item_condition == "ambiguous", 0.5, -0.5)
+    )
+
+test_accuracy_bysubject <- test_active_sampling %>%
+  group_by(subject_id) %>%
+  summarize(accuracy = mean(correct, na.rm = TRUE), .groups = "drop")
+
+test_accuracy_bysubject_byitem <- test_active_sampling %>%
+  group_by(subject_id, targetIsAmbiguousYN) %>%
+  summarize(accuracy = mean(correct, na.rm = TRUE), .groups = "drop")
+
+test_accuracy_bysubject_summary <- test_accuracy_bysubject %>%
+  summarize(
+    N = n(),
+    prop_correct = mean(accuracy, na.rm = TRUE),
+    ci = qt(0.975, N - 1) * sd(accuracy, na.rm = TRUE) / sqrt(N),
+    prop_correct_lower_ci = prop_correct - ci,
+    prop_correct_upper_ci = prop_correct + ci) %>%
+  select(-ci)
+test_accuracy_bysubject_summary
+
+
+M <- n_distinct(test_accuracy_bysubject_byitem$targetIsAmbiguousYN)  
+grand_mean <- mean(test_accuracy_bysubject_byitem$accuracy)
+
+test_accuracy_bysubject_byitem_summary <- test_accuracy_bysubject_byitem %>%
+  group_by(subject_id) %>%
+  mutate(accuracy_norm = accuracy - mean(accuracy) + grand_mean) %>%
+  group_by(targetIsAmbiguousYN) %>%
+  summarize(
+    N = n(),
+    se = sd(accuracy_norm) * sqrt(M / (M - 1)) / sqrt(N),
+    ci = qt(0.975, N - 1) * se,
+    accuracy = mean(accuracy),
+    .groups = "drop") %>%
+  mutate(lower_ci = accuracy - ci,
+         upper_ci = accuracy + ci) %>%
+  select(-se, -ci)
+test_accuracy_bysubject_byitem_summary
+```
+
+```{r}
+# test accuracy model 
+
+```
 
 *Side-by-side graph with original graph is ideal here*
 
