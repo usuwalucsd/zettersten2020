@@ -8,7 +8,7 @@
 
 var jsPsych = initJsPsych({
 
-  show_progress_bar: true, // TO-DO: change from automatic to manual progress
+  show_progress_bar: true, 
   on_finish: function () {
     jsPsych.data.displayData();
   },
