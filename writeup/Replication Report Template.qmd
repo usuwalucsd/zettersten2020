@@ -23,6 +23,64 @@ This study aims to replicate the findings from the Supplementary Experiment 1 (S
 ### Power Analysis
 
 Original effect size, power analysis for samples to achieve 80%, 90%, 95% power to detect that effect size.  Considerations of feasibility for selecting planned sample size.
+```{r}
+# run once 
+# install.packages(c("lme4", "lmerTest", "simr", 'pwr','tidyverse'))
+library(tidyverse)
+library(pwr)
+theme_set(theme_classic(base_size = 14))
+library(lme4)
+library(lmerTest)
+library(simr)
+```
+
+```{r}
+set.seed(10)
+
+# Step 1: one fake dataset with 28 people and 4 sampling trials each, the same design
+# as Experiment 1, and the model fit to it
+pilot_people <- tibble(person = 1:28,
+                       intercept = rnorm(28, 0.62, 0.75)) 
+pilot <- pilot_people |>
+  cross_join(tibble(trial = 1:4)) |>
+  mutate(item = sample(1:8, n(), replace = TRUE),               # which of the 8 aliens was chosen
+         ambiguous = rbinom(n(), 1, plogis(intercept)))         # 1 = chose an ambiguous alien
+
+pilot_fit <- glmer(ambiguous ~ 1 + (1 | person) + (1 | item), data = pilot, family = binomial)
+fixef(pilot_fit) # the effect this fake pilot happened to give
+
+# Step 2: plan for the effect and variability you can justify
+fixef(pilot_fit)["(Intercept)"] <- 0.62
+
+# Step 3a: power with the 28 people in the original study
+powerSim(pilot_fit, test = fixed("(Intercept)", "z"), nsim = 500, progress = FALSE)
+
+# Step 3b: power with 28, 70, and 140 people
+bigger_fit <- extend(pilot_fit, along = "person", n = 100)
+simr_curve <- powerCurve(bigger_fit, test = fixed("(Intercept)", "z"), along = "person",
+                         breaks = c(10, 15, 20, 25, 30, 35, 40, 
+                                    45, 50, 55, 60, 65, 70, 75, 
+                                    80, 85, 95, 100), 
+                         nsim = 500, progress = FALSE)
+simr_curve
+plot(simr_curve)
+
+# samples to achiece 80%, 90%, and 95% power
+power_curve_summary <- summary(simr_curve)
+power_curve_summary
+
+powers <- c(.80, .90, .95)
+sample_size_power <- tibble(power = powers,
+                   num_participants = map_dbl(powers, \(p) min(power_curve_summary$nlevels[power_curve_summary$mean >= p])))
+sample_size_power
+
+ggplot(power_curve_summary, aes(x = nlevels, y = mean*100)) +
+  geom_hline(yintercept = c(80, 90, 95), linetype = "dashed",  color='grey') +
+  geom_line() +
+  ylim(0, 100) +
+  labs(x = "Number of participants", y = "Power")
+```
+
 
 ### Planned Sample
 
@@ -86,18 +144,42 @@ You can comment this section out prior to final report with data collection.
 Data preparation following the analysis plan.
 	
 ```{r include=F}
-### Data Preparation
-
 #### Load Relevant Libraries and Functions
-library(ggplot2)
-library(tidyverse)
+
+# run once
+# install.packages(c('tidyverse', 'lme4', 'here', 'AICcmodavg'))
+
 library(lme4)
 library(here)
+library(tidyverse)
+library(AICcmodavg) 
+```
 
+```{r}
+### Data Preprocess (files in raw_data will not be pushed to github)
+read_path  <- here::here("..", "data", "raw_data")
+write_path <- here::here("..", "data","processed_data")
+filename <- "Zettersten2020_replication_processed_data.csv"
+
+files <- list.files(read_path, pattern = "\\.csv$", full.names = TRUE)
+
+all_data <- files |>
+  set_names(basename) |>
+  map(read_csv) |>
+  list_rbind(names_to = "file") |>
+  filter(!(trial_type == "survey-text" & trial_index == 2)) # removing students UCSD PID
+
+dir.create(write_path, showWarnings = FALSE)
+write_csv(all_data, file.path(write_path, filename))
+```
+
+``` {r}
 #### Import data
-d <- read.csv("Zettersten2020_preprocessed_data.csv")
+read_path <- here::here("..", "data","processed_data")
+d <- read.csv(file.path(read_path, "Zettersten2020_replication_processed_data.csv"))
 
 #### Data exclusion / filtering
+
 
 #### Prepare data for analysis - create columns etc.
 ```
@@ -125,45 +207,6 @@ active_sampling_summary <- active_sampling_bysubject %>%
     mean_ambiguous_upper_ci = mean_ambiguous + ci_ambiguous,
     .groups = "drop")
 active_sampling_summary
-```
-
-The analyses as specified in the analysis plan.  
-```{r}
-# sampling choices logistics mixed effects regression
-d <- d %>%
-  mutate(ambiguous_selection = ifelse(chosen_item_condition == "ambiguous", 1, 0))
-
-# participant = subject_id; item = chosen_image
-model <- glmer(ambiguous_selection ~ 1 + (1|subject_id) + (1|chosen_image),
-               data = filter(d, trial_type == "sampling" & round_condition == "active"),
-               family = binomial,
-               control = glmerControl(optimizer = "bobyqa", check.conv.singular = "ignore"))
-summary(model)
-confint(model, parm = "(Intercept)", method = "Wald")
-
-wilcox.test(active_sampling_bysubject$prop_ambiguous, mu = 0.5)
-
-# Figure 1a
-model_prediction_sampling <- data.frame(ambiguity_condition = "ambiguous")
-predicted_y <- predictSE(model, model_prediction_sampling, type = "response")
-model_prediction_sampling <- model_prediction_sampling %>%
-  mutate(
-    prop_ambiguous = predicted_y$fit,
-    prop_ambiguous_lower_ci = predicted_y$fit - 1.96 * predicted_y$se.fit,
-    prop_ambiguous_upper_ci = predicted_y$fit + 1.96 * predicted_y$se.fit)
-
-sampling_figure <- ggplot(model_prediction_sampling,
-                          aes(x = 'Experiment 1', y = prop_ambiguous)) +
-  geom_bar(stat = "identity", linewidth = 2.5, width = 0.5) +
-  geom_dotplot(data = all_subjects_sampling, aes(y = prop_ambiguous),
-               binaxis = "y", stackdir = "center", alpha = 0.5, dotsize = 0.6) +
-  geom_errorbar(aes(ymin = prop_ambiguous_lower_ci, ymax = prop_ambiguous_upper_ci),width = 0.1) +
-  geom_hline(yintercept = 0.5, linetype = "dotted")+ # chance 50%
-  ylab("Probability of Ambiguous Selection") +
-  theme_classic() +
-  theme(legend.position = "none")
-sampling_figure
-
 ```
 
 ```{r}
@@ -214,9 +257,83 @@ test_accuracy_bysubject_byitem_summary <- test_accuracy_bysubject_byitem %>%
 test_accuracy_bysubject_byitem_summary
 ```
 
+The analyses as specified in the analysis plan.  
 ```{r}
-# test accuracy model 
+# sampling choices logistics mixed effects regression
+d <- d %>%
+  mutate(ambiguous_selection = ifelse(chosen_item_condition == "ambiguous", 1, 0))
 
+# participant = subject_id; item = chosen_image
+sampling_choice_model <- glmer(ambiguous_selection ~ 1 + (1|subject_id) + (1|chosen_image),
+               data = filter(d, trial_type == "sampling" & round_condition == "active"),
+               family = binomial,
+               control = glmerControl(optimizer = "bobyqa", check.conv.singular = "ignore"))
+summary(sampling_choice_model)
+confint(sampling_choice_model, parm = "(Intercept)", method = "Wald")
+
+wilcox.test(active_sampling_bysubject$prop_ambiguous, mu = 0.5)
+```
+
+```{r}
+# test accuracy against chance  
+test_active_sampling$offset.125 <- 1/8
+test_accuracy_againstchance <- glmer(correct ~ offset(qlogis(offset.125)) + (1|subject_id) + (1|target_word),
+                       data = test_active_sampling, family = binomial,
+                       control = glmerControl(optimizer = "bobyqa"))
+summary(test_accuracy_againstchance)
+
+# test accuracy comparing ambiguous vs disambiguated items
+test_accuracy_items_model <- glmer(correct ~ 1 + targetIsAmbiguousC +
+                       (1 + targetIsAmbiguousC|subject_id) + (1|target_word),
+                     data = test_active_sampling, family = binomial,
+                     control = glmerControl(optimizer = "bobyqa"))
+summary(test_accuracy_items_model)
+confint(test_accuracy_items_model, parm = "beta_", method = "Wald")
+```
+
+Figures
+```{r}
+# Figure 3a
+model_prediction_sampling <- data.frame(ambiguity_condition = "ambiguous")
+predicted_y <- predictSE(sampling_choice_model, model_prediction_sampling, type = "response")
+model_prediction_sampling <- model_prediction_sampling %>%
+  mutate(
+    prop_ambiguous = predicted_y$fit,
+    prop_ambiguous_lower_ci = predicted_y$fit - 1.96 * predicted_y$se.fit,
+    prop_ambiguous_upper_ci = predicted_y$fit + 1.96 * predicted_y$se.fit)
+
+sampling_figure <- ggplot(model_prediction_sampling,   
+                          aes(x = 'Experiment 1', y = prop_ambiguous)) +
+  geom_bar(stat = "identity", linewidth = 2.5, width = 0.5) +
+  geom_dotplot(data = active_sampling_bysubject, aes(y = prop_ambiguous),
+               binaxis = "y", stackdir = "center", alpha = 0.5, dotsize = 0.6) +
+  geom_errorbar(aes(ymin = prop_ambiguous_lower_ci, ymax = prop_ambiguous_upper_ci),width = 0.1) +
+  geom_hline(yintercept = 0.5, linetype = "dotted")+ # chance 50%
+  ylab("Probability of Ambiguous Selection") +
+  theme_classic() +
+  theme(legend.position = "none")
+sampling_figure
+
+```
+
+
+
+```{r}
+# Figure 3b: Relationship between choosing more ambiguous items and test accuracy in Experiment 
+samplingChoice_test_bysubject_summary <- active_sampling_bysubject %>%
+  left_join(test_accuracy_bysubject, by = "subject_id")
+
+cor.test(samplingChoice_test_bysubject_summary$accuracy, samplingChoice_test_bysubject_summary$prop_ambiguous)
+
+p_exp1_sampling_test <- ggplot(samplingChoice_test_bysubject_summary, aes(prop_ambiguous, accuracy)) +
+  geom_violin(aes(group = prop_ambiguous), color = "#E41A1C", draw_quantiles = 0.5) +
+  geom_dotplot(aes(group = prop_ambiguous), fill = "#E41A1C", color = "#E41A1C",
+               alpha = 0.6, binaxis = "y", stackdir = "center", dotsize = 0.8) +
+  geom_smooth(method = "lm", color = "black", fill = "#4B0082", alpha = 0.3) +
+  theme_classic() +
+  ylab("Test Accuracy") +
+  xlab("Probability of Ambiguous Selection")
+p_exp1_sampling_test
 ```
 
 *Side-by-side graph with original graph is ideal here*
