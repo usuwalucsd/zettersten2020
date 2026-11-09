@@ -73,7 +73,6 @@ var preload = {
   audio: all_stims.map((stim) => stim.audio).concat(audio_check_files), // novel words + audio check words
 }; timeline.push(preload);
 
-
 // --------------------------  TASK INTRO  --------------------------
 var taskIntro = []
 var fullscreen = {
@@ -82,6 +81,13 @@ var fullscreen = {
   button_label: `Launch Experiment`, 
   fullscreen_mode: true
 }; taskIntro.push(fullscreen);
+
+var PID = {
+  type: jsPsychSurveyText,
+  questions: [
+    {prompt: 'Please enter your PID, name:',required: true}
+  ]
+}; taskIntro.push(PID);
 
 
 var instructions = { // general instructions
@@ -341,5 +347,15 @@ timeline.push({
 timeline.push(createTrainingPhase(blockOrder[1], 2)); 
 timeline.push(createSamplingPhase(blockOrder[1], 2));
 timeline.push(make_test_phase(blockOrder[1], 2)); 
+
+// demographics 
+timeline.push({
+  type: jsPsychSurveyText,
+  questions: [
+    {prompt: 'Age',required: true}, 
+    {prompt: 'Gender',required: true}, 
+  ]
+  
+})
 
 jsPsych.run(timeline);
