@@ -293,7 +293,9 @@ function createSamplingPhase(samplingType, currentRound) {
             learning_2: stimuli2,
             learning_1_location: location1, 
             learning_2_location: location2, 
-            learning_1_word_first: selectedWordFirst[j]
+            learning_1_word_first: selectedWordFirst[j], 
+            data: {block: i+1, samplingTrial: j+1, round: currentRound, round_condition: samplingType}
+
           };
           samplingPhase.push(passiveSamplingTrial);
         }
