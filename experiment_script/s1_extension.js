@@ -64,6 +64,14 @@ const passive_sampling_stims = jsPsych.randomization.shuffle(all_stims.slice(8, 
 
 var timeline = []; 
 
+// --------------------------------------  PRELOAD   -------------------------------------------------------
+// load all images and audio before the experiment starts (as in the original script),
+// so the words play on time and the aliens appear without delay
+var preload = {
+  type: jsPsychPreload,
+  images: all_stims.map((stim) => stim.image),
+  audio: all_stims.map((stim) => stim.audio).concat(audio_check_files), // novel words + audio check words
+}; timeline.push(preload);
 
 
 // --------------------------  TASK INTRO  --------------------------
