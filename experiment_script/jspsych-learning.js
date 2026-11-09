@@ -112,6 +112,8 @@ var jsPsychLearning = (function (jspsych) {
             image2: { type: jspsych.ParameterType.STRING },
             audio2: { type: jspsych.ParameterType.STRING },
             word2: { type: jspsych.ParameterType.STRING },
+            item_condition1: { type: jspsych.ParameterType.STRING }, // ambiguous vs disambiguated
+            item_condition2: { type: jspsych.ParameterType.STRING },
             location1: { type: jspsych.ParameterType.STRING },
             location2: { type: jspsych.ParameterType.STRING },
             wordOrder1: { type: jspsych.ParameterType.INT },
@@ -348,6 +350,8 @@ var jsPsychLearning = (function (jspsych) {
                     image2: trial.stimuli2.image,
                     audio2: trial.stimuli2.audio,
                     word2: trial.stimuli2.word,
+                    item_condition1: trial.stimuli1.item_condition,
+                    item_condition2: trial.stimuli2.item_condition,
                     location1: trial.location1,
                     location2: trial.location2,
                     wordOrder1: trial.wordOrder1,

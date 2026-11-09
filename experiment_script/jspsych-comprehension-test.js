@@ -69,6 +69,8 @@ var jsPsychComprehensionTest = (function (jspsych) {
             chosen_image: { type: jspsych.ParameterType.STRING },
             chosen_word: { type: jspsych.ParameterType.STRING },
             target_word: { type: jspsych.ParameterType.STRING },
+            chosen_item_condition: { type: jspsych.ParameterType.STRING }, // ambiguous vs disambiguated
+            target_item_condition: { type: jspsych.ParameterType.STRING },
             correct: { type: jspsych.ParameterType.BOOL}, 
         },
     };
@@ -319,6 +321,8 @@ var jsPsychComprehensionTest = (function (jspsych) {
                     chosen_image: trial.stimuli_set[chosen_index].image,
                     chosen_word: trial.stimuli_set[chosen_index].word,
                     target_word: trial.target_word,
+                    chosen_item_condition: trial.stimuli_set[chosen_index].item_condition,
+                    target_item_condition: trial.stimuli_set.find((stimulus) => stimulus.word === trial.target_word).item_condition,
                     correct: trial.stimuli_set[chosen_index].word === trial.target_word,
                 };
 

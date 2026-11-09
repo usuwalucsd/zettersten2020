@@ -135,6 +135,8 @@ var jsPsychPassiveSampling = (function (jspsych) {
             learning_2_index: { type: jspsych.ParameterType.INT }, // index of learning_2 in stimuli_set
             learning_2_image: { type: jspsych.ParameterType.STRING },
             learning_2_word: { type: jspsych.ParameterType.STRING },
+            learning_1_item_condition: { type: jspsych.ParameterType.STRING }, // ambiguous vs disambiguated
+            learning_2_item_condition: { type: jspsych.ParameterType.STRING },
             learning_1_location: { type: jspsych.ParameterType.STRING },
             learning_2_location: { type: jspsych.ParameterType.STRING },
             learning_1_word_first: { type: jspsych.ParameterType.BOOL },
@@ -516,6 +518,8 @@ var jsPsychPassiveSampling = (function (jspsych) {
                     learning_2_index: learning_2_index,
                     learning_2_image: trial.learning_2.image,
                     learning_2_word: trial.learning_2.word,
+                    learning_1_item_condition: trial.learning_1.item_condition,
+                    learning_2_item_condition: trial.learning_2.item_condition,
                     learning_1_location: trial.learning_1_location,
                     learning_2_location: trial.learning_2_location,
                     learning_1_word_first: trial.learning_1_word_first,

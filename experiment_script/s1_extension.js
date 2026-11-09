@@ -59,8 +59,13 @@ const all_stims = wordItems.map((word, i) => ({
   audio: `stimuli/${word}.m4a`
 }));
 
-const active_sampling_stims = jsPsych.randomization.shuffle(all_stims.slice(0, 8));
-const passive_sampling_stims = jsPsych.randomization.shuffle(all_stims.slice(8, 16));
+// item condition is set by an item's index in its round's set, as in the original script (cur_ambiguity_roles)
+// MUST MATCH specifiedStim: items 0-3 always appear with the same partner (ambiguous), items 4-7 appear with three different partners (disambiguated)
+const item_conditions = ["ambiguous", "ambiguous", "ambiguous", "ambiguous", "disambiguated", "disambiguated", "disambiguated", "disambiguated"];
+const add_item_conditions = (stims) => stims.map((stim, i) => ({ ...stim, item_condition: item_conditions[i] }));
+
+const active_sampling_stims = add_item_conditions(jsPsych.randomization.shuffle(all_stims.slice(0, 8)));
+const passive_sampling_stims = add_item_conditions(jsPsych.randomization.shuffle(all_stims.slice(8, 16)));
 
 var timeline = []; 
 
@@ -154,7 +159,7 @@ instructions = { // general instructions
 // Note: Hard coded stimulis combination are from the original experiment script that was available in OSF
 // There are two learning blocks, each block has 12 cross-situational trials, each showing 2 object (pairs of indices into stims);
 // every object appears 3 times per block, and the same 12 pairs are reshuffled for each of the 2 blocks
-// - object 0-3: the (fully or partially) ambiguous set, depending on condition
+// - object 0-3: the fully ambiguous set, depending on condition
 // - object 4-7: the disambiguated set; each appears with three different partners
 const specifiedStim = [[0,1],[0,1],[0,1],[2,3],[2,3],[2,3],[4,5],[4,6],[4,7],[5,6],[5,7],[6,7]];
 
