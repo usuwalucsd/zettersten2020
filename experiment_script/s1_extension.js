@@ -207,7 +207,9 @@ function createTrainingPhase(samplingType, currentRound) {
         location1: location1,
         location2: location2,
         wordOrder1: wordOrder1,
-        wordOrder2: wordOrder2
+        wordOrder2: wordOrder2, 
+        data: {round: currentRound, round_condition: samplingType}
+
       }
 
       trainingPhase.push(trainingTrial);
@@ -262,7 +264,7 @@ function createSamplingPhase(samplingType, currentRound) {
           selected_learning_location: locations[j][0], //  location
           random_learning_location: locations[j][1],
           selected_word_first: selectedWordFirst[j],
-          data: {block: i+1, samplingTrial: j+1, round: currentRound}
+          data: {block: i+1, samplingTrial: j+1, round: currentRound, round_condition: samplingType}
       };
       samplingPhase.push(activeSamplingTrial);
 
@@ -320,7 +322,7 @@ const make_test_phase = (samplingType, currentRound) => {
     type: jsPsychComprehensionTest,
     stimuli_set: jsPsych.randomization.shuffle(target_words),   // new location for stims each trial
     target_word: target.word,
-    data: {round: currentRound}
+    data: {round: currentRound, round_condition: samplingType}
   }));
 
   return [instructions].concat(test_trials);
