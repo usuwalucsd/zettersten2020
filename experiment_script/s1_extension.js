@@ -366,12 +366,16 @@ timeline.push({
 })
 
 
-
+// end of experiment debrief
 timeline.push({
   type: jsPsychInstructions,
-  pages: [instruction_format(`Thanks for participating!<br>
-    This is an experiment in which you were asked to learn words by keeping track of which words occurred with which aliens across time. We are interested in how people represent uncertainty and make decisions about what to learn next.`)], 
-  show_clickable_nav: false
+  pages: [instruction_format(`
+    <b>Thanks for participating!</b><br>
+    <br>This is an experiment in which you were asked to learn words by keeping track of which words occurred with which aliens across time. We are interested in how people represent uncertainty and make decisions about what to learn next.<br>
+    <br>Please click <i>End Study</i> to submit your responses. Please wait for the screen to say "Done" before you close this tab.`)], 
+  allow_backward: false, 
+  show_clickable_nav: true, 
+  button_label_next: "End Study"
 });
 
 jsPsych.run(timeline);
