@@ -9,9 +9,9 @@
 var jsPsych = initJsPsych({
 
   show_progress_bar: true,
-  on_finish: function () {
-    jsPsych.data.displayData();
-  },
+  // on_finish: function () {
+  //   jsPsych.data.displayData();
+  // },
   // for datapipe   
   extensions: [
     {
@@ -99,7 +99,7 @@ var instructions = { // general instructions
   type: jsPsychInstructions,
   pages: [
     // instruction_format('Welcome to this experiment. In this experiment you will learn names for aliens. There will be few different learning tasks as you go.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - we will only accept HITs in which people pass this initial audio test. Make sure your audio is turned on, then click NEXT to start the audio test!'),
-    instruction_format('Welcome to the experiment! In this experiment you will learn names for aliens. There will be a few different tasks as you go. You will learn the names for two sets of aliens across the entire experiment. You can track how far along you are in the experiment in the progress bar above.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - we will only accept HITs in which people pass this initial audio test. Make sure your audio is turned on, then click NEXT to start the audio test!')
+    instruction_format('Welcome to the experiment! In this experiment you will learn names for aliens. There will be a few different tasks as you go. You will learn the names for two sets of aliens across the entire experiment. You can track how far along you are in the experiment in the progress bar above.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - you must pass this initial audio test for participation. Make sure your audio is turned on, then click NEXT to start the audio test!')
   ],
   show_clickable_nav: true
 }; taskIntro.push(instructions); 
@@ -364,5 +364,14 @@ timeline.push({
   ]
   
 })
+
+
+
+timeline.push({
+  type: jsPsychInstructions,
+  pages: [instruction_format(`Thanks for participating!<br>
+    This is an experiment in which you were asked to learn words by keeping track of which words occurred with which aliens across time. We are interested in how people represent uncertainty and make decisions about what to learn next.`)], 
+  show_clickable_nav: false
+});
 
 jsPsych.run(timeline);
