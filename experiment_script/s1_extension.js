@@ -277,11 +277,13 @@ function createSamplingPhase(samplingType, currentRound) {
         const currentStimuliPair = samplingPairs[j];
         const selectedWordFirst = jsPsych.randomization.repeat([true, false], numSamplingTrialsPerBlock / 2);
 
-        const [stimuli1, stimuli2] = [stimuliSet[currentStimuliPair[0]], stimuliSet[currentStimuliPair[1]]]; 
+        // pairs index into the unshuffled set, so indices 0-3 are the ambiguous items and 4-7 the disambiguated ones (as in specifiedStim);
+        // the shuffled stimuliSet is only used for the order of the aliens on the screen
+        const [stimuli1, stimuli2] = [passive_sampling_stims[currentStimuliPair[0]], passive_sampling_stims[currentStimuliPair[1]]];
 
         // which side each image appears on in the trial
         const [location1, location2] = jsPsych.randomization.shuffle(["left", "right"]);
-      
+
           var passiveSamplingTrial = {
             type: jsPsychPassiveSampling,
             stimuli_set: stimuliSet,
