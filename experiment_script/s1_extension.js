@@ -99,26 +99,39 @@ var consent = {
       The purpose of this study is to better understand how well previously published studies in the psychological field replicate online and with different populations. Your participation in this research should last approximately 5-30 minutes  If you agree to take part in this study, you may be asked to view a set of stimuli, including pictures, sounds, written text, or videos and then giving some responses via key-presses, verbally, or with paper-and-pencil. We may also observe your choices or preferences among an array of stimuli.  These stimuli will be taken directly from or closely adapted from studies that already exist in the published psychological literature. Stimuli will include, e.g., pictures of objects and human faces, audio and video clips, short text passages, etc. None of the stimuli will be disturbing, threatening, or offensive. The online and in-person experiments described in this protocol will take no more than 30 minutes. An example game you might play would be to click on an image on the screen that matches a word you hear being said out loud. Your total expected time commitment for this study is between 5-30 minutes, and is specified in the study description.<br><br>
       Your participation in this study is completely voluntary and you can withdraw at any time. Choosing not to participate or withdrawing will result in no penalty or loss of benefits to which you are entitled. You are free to skip any question that you choose.<br><br>
       We will not be asking for any personally identifying information, and we will handle responses as confidentially as possible. Your SONA or Prolific IDs will never be tied to your responses on this survey. However, we cannot guarantee the confidentiality of information transmitted over the Internet. To minimize this risk, data containing anything that might be personally identifiable (e.g. Prolific IDs or IP addresses) will be encrypted on transfer and storage and will only be accessible to qualified lab personnel. We will be keeping data collected as part of this experiment indefinitely. This anonymized data (containing neither Prolific IDs nor IP addresses) may be shared with the scientific community or with other participants to be used as stimuli in future studies.<br><br>
-      If you have questions about this project or if you have a research-related problem, you may contact the researcher(s),  Dr. Bria Long, brlong@ucsd.edu. If you have any questions concerning your rights as a research subject, you may contact the UC San Diego Office of IRB Administration at irb@ucsd.edu or 858-246-4777.<br><br>
+      If you have questions about this project or if you have a research-related problem, you may contact the researcher(s), Urvi Suwal, usuwal@ucsd.edu or Dr. Bria Long, brlong@ucsd.edu. If you have any questions concerning your rights as a research subject, you may contact the UC San Diego Office of IRB Administration at irb@ucsd.edu or 858-246-4777.<br><br>
       By participating in this research you are indicating that you are at least 18 years old, have read this consent form, and agree to participate in this research study. Please keep this consent form for your records.`), 
     
   choices: ['Agree']
 }; taskIntro.push(consent);
 
+var demographics = {
+  type: jsPsychSurveyText,
+  questions: [
+    {prompt: '* <b>Age</b>',required: true, name: 'age'}, 
+    {prompt: '* <b>Gender</b>',required: true, name: 'gender'}, 
+    {prompt: '* <b>Is English your first/primary language?</b> (y/n)', required: true, name: 'L1'},
+    {prompt: '<i>(If you answered "no" to the question above)</i> <br>What is your first/primary language?', name: 'L1_non_enlgish'},
+
+    {prompt: 'What is your second language?<br>If not applicable, please write NA.', name: 'L2'},
+    {prompt: 'Please specify any other language(s) you speak in addition to the primary and secondary language.<br>If not applicable, please write NA.', name: 'other_langs'},
+  ]
+
+}; taskIntro.push(demographics);
 
 var instructions = { // general instructions 
   type: jsPsychInstructions,
   pages: [
     // instruction_format('Welcome to this experiment. In this experiment you will learn names for aliens. There will be few different learning tasks as you go.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - we will only accept HITs in which people pass this initial audio test. Make sure your audio is turned on, then click NEXT to start the audio test!'),
-    instruction_format('Welcome to the experiment! In this experiment you will learn names for aliens. There will be a few different tasks as you go. You will learn the names for two sets of aliens across the entire experiment. You can track how far along you are in the experiment in the progress bar above.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - you must pass this initial audio test for participation. Make sure your audio is turned on, then click NEXT to start the audio test!')
+    instruction_format('Welcome to the experiment! In this experiment you will learn names for aliens. There will be a few different tasks as you go. You will learn the names for two sets of aliens across the entire experiment. You can track how far along you are in the experiment in the progress bar above.<br><br>You will need to hear audio during the experiment, so make sure you are using an up-to-date browser (Firefox, Chrome, or Safari should all be good options). Please do not refresh this tab to restart the experiment. <br><br>First, we will check that your audio is working properly. We will play you simple words and ask you to type in what you hear. Pay close attention - you must pass this initial audio test for participation. Make sure your audio is turned on, then click NEXT to start the audio test!')
   ],
   show_clickable_nav: true
 }; taskIntro.push(instructions); 
 
+
 // auditory attention check
 // part of the exclusion criteria if participants do not identify the correct word 
 // that they hear in the audio 
-
 const audio_check = {
   type: jsPsychSurveyHtmlForm,
       preamble: function () {
@@ -384,21 +397,6 @@ function buildTimeline() {
   timeline.push(createSamplingPhase(blockOrder[1], 2));
   timeline.push(make_test_phase(blockOrder[1], 2)); 
 
-  // demographics 
-  timeline.push({
-    type: jsPsychSurveyText,
-    questions: [
-      {prompt: '* <b>Age</b>',required: true, name: 'age'}, 
-      {prompt: '* <b>Gender</b>',required: true, name: 'gender'}, 
-      {prompt: '* <b>Is English your first/primary language?</b> (y/n)', required: true, name: 'L1'},
-      {prompt: '<i>(If you answered "no" to the question above)</i> <br>What is your first/primary language?', required: true, name: 'L1_non_enlgish'},
-
-      {prompt: 'What is your second language?<br>If not applicable, please write NA.', name: 'L2'},
-      {prompt: 'Please specify any other language(s) you speak in addition to the primary and secondary language.<br>If not applicable, please write NA.', name: 'other_langs'},
-    ]
-  
-  });
-
 
   // end of experiment debrief
   timeline.push({
@@ -441,7 +439,7 @@ async function createExperiment() {
     passiveCondition: passiveCondition,
     activeFirst: blockOrder[0] === "active"
   });
-  console.log("condition: " + conditionIndex + " (" + condition + ")");
+  // console.log("condition: " + conditionIndex + " (" + condition + ")");
 
   buildTimeline();
   jsPsych.run(timeline);
