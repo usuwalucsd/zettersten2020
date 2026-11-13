@@ -10,4 +10,4 @@ Zettersten, M., & Saffran, J. R. (2021). Sampling to learn words: Adults and chi
 
 ## Questions 
 Please contact usuwal@ucsd.edu for any questions or comments. 
-contains the jsPsych experiment (experiment/index.html) that was run on Prolific. Raw data collected in the main experiment hosted on OSF: https://osf.io/njtas
+
