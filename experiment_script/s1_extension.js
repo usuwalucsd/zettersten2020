@@ -27,6 +27,7 @@ var jsPsych = initJsPsych({
 });
 
 var subject_id = jsPsych.randomization.randomID(10);
+var sona_id = jsPsych.data.urlVariables()['sona_id']
 const instruction_format = (text) => `<div style="max-width: 50em; margin: 0 auto; text-align: left">${text}</div>`;
 const passiveCondition = jsPsych.randomization.sampleWithoutReplacement(["passiveMax", "passiveMid", "passiveMin"], 1)[0]; // randomly assign participants to one of the three conditions
 const numBlocks = 2
@@ -35,6 +36,7 @@ const blockOrder = jsPsych.randomization.shuffle(['active', passiveCondition]);
 const condition = blockOrder[0]+"_" + blockOrder[1]; 
 jsPsych.data.addProperties({
   subject_id: subject_id, 
+  sona_id: sona_id, 
   condition: condition, 
   passiveCondition: passiveCondition, 
   activeFirst: (blockOrder[0] === 'active') ? true : false
