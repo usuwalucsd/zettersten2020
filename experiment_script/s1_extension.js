@@ -272,12 +272,13 @@ function createSamplingPhase(samplingType, currentRound) {
     };
   } else {
     var stimuliSet = jsPsych.randomization.shuffle(stimuliSet); 
+    // which item's word is heard first, balanced 2/2 across the 4 passive trials (as in the active round)
+    const selectedWordFirst = jsPsych.randomization.repeat([true, false], numSamplingTrialsPerBlock / 2);
 
     for (let i =0; i < numSamplingBlocks; i++) {
       for (let j =0; j < numSamplingTrialsPerBlock; j++) {
         const samplingPairs = (passiveCondition === 'passiveMax') ? passiveMax : (passiveCondition === 'passiveMid') ? passiveMid : passiveMin;
         const currentStimuliPair = samplingPairs[j];
-        const selectedWordFirst = jsPsych.randomization.repeat([true, false], numSamplingTrialsPerBlock / 2);
 
         // pairs index into the unshuffled set, so indices 0-3 are the ambiguous items and 4-7 the disambiguated ones (as in specifiedStim);
         // the shuffled stimuliSet is only used for the order of the aliens on the screen
