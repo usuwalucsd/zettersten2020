@@ -29,20 +29,22 @@ var jsPsych = initJsPsych({
 var subject_id = jsPsych.randomization.randomID(10);
 var sona_id = jsPsych.data.urlVariables()['sona_id']
 const instruction_format = (text) => `<div style="max-width: 50em; margin: 0 auto; text-align: left">${text}</div>`;
-const passiveCondition = jsPsych.randomization.sampleWithoutReplacement(["passiveMax", "passiveMid", "passiveMin"], 1)[0]; // randomly assign participants to one of the three conditions
 const numBlocks = 2
-const blockOrder = jsPsych.randomization.shuffle(['active', passiveCondition]); 
 
-const condition = blockOrder[0]+"_" + blockOrder[1]; 
-jsPsych.data.addProperties({
-  subject_id: subject_id, 
-  sona_id: sona_id, 
-  condition: condition, 
-  passiveCondition: passiveCondition, 
-  activeFirst: (blockOrder[0] === 'active') ? true : false
-});
-
-console.log("condition: " + condition);
+// condition assignment is done by DataPipe (balanced across participants) in createExperiment() at the bottom of this file.
+// DataPipe returns an index 0..5 (set "number of conditions" to 6 in the DataPipe dashboard), which picks
+// one of the 3 passive conditions x 2 block orders below
+const conditionTable = [
+  {passiveCondition: "passiveMax", blockOrder: ["active", "passiveMax"]},
+  {passiveCondition: "passiveMax", blockOrder: ["passiveMax", "active"]},
+  {passiveCondition: "passiveMid", blockOrder: ["active", "passiveMid"]},
+  {passiveCondition: "passiveMid", blockOrder: ["passiveMid", "active"]},
+  {passiveCondition: "passiveMin", blockOrder: ["active", "passiveMin"]},
+  {passiveCondition: "passiveMin", blockOrder: ["passiveMin", "active"]},
+];
+// set in createExperiment() once DataPipe has returned the condition
+let passiveCondition;
+let blockOrder;
 
 var wordItems = ["beppo","biffer","deela","finna","guffi", "kita","leemu","manu", "noopy","pahvy", "roozer", "sibu","soma", "tesser","tibble","zeevo"];
 var imageItems = [29, 18, 10, 11, 12, 14, 17, 7, 8, 9, 4, 5, 6, 3, 2, 1];
@@ -343,59 +345,94 @@ const make_test_phase = (samplingType, currentRound) => {
 
 
 
-timeline.push(taskIntro);
-timeline.push(createTrainingPhase(blockOrder[0], 1)); 
-timeline.push(createSamplingPhase(blockOrder[0], 1));
-timeline.push(make_test_phase(blockOrder[0], 1)); 
+// the rest of the timeline depends on the condition, so it is built after DataPipe assigns one (see createExperiment)
+function buildTimeline() {
+  timeline.push(taskIntro);
+  timeline.push(createTrainingPhase(blockOrder[0], 1));
+  timeline.push(createSamplingPhase(blockOrder[0], 1));
+  timeline.push(make_test_phase(blockOrder[0], 1)); 
 
-timeline.push({
-  type: jsPsychInstructions,
-  pages: [instruction_format(`Great job! Now, you will complete another round of the experiment with a brand new set of aliens.
-    Just like at the beginning of the last round, we will first check that your audio is still working properly. We will play you simple words and ask you to type in what you hear. Remember that we will only accept HITs in which people pass this audio test. Click NEXT to start the audio test!`)], 
-  show_clickable_nav: true
-});
+  timeline.push({
+    type: jsPsychInstructions,
+    pages: [instruction_format(`Great job! Now, you will complete another round of the experiment with a brand new set of aliens.
+      Just like at the beginning of the last round, we will first check that your audio is still working properly. We will play you simple words and ask you to type in what you hear. Remember that we will only accept HITs in which people pass this audio test. Click NEXT to start the audio test!`)], 
+    show_clickable_nav: true
+  });
 
-timeline.push(audio_check_2);
+  timeline.push(audio_check_2);
 
-timeline.push({
-  type: jsPsychInstructions,
-  pages: [instruction_format(`Great! Now, let's begin with the new round, with a new set of aliens. These aliens and their names will be completely different and are not related to the aliens you just learned about.
-    Just like earlier, you will learn the names for 8 brand new alien creatures. On each trial, you will see two aliens and hear and read two names. As before, you won't know at first which name goes with which alien because the names appear in random order. Try to figure out over time which name goes with which alien. Please do not write any information down - just do your best to remember and learn the names as you go. Remember that you'll hear the name for each of the two aliens and read them on the screen, but the order of the names will be completely random (so, for example, the first name that appears does not necessarily go with the left alien). Make sure your audio is still on, then click NEXT to start learning!`)], 
-  show_clickable_nav: true
-});
+  timeline.push({
+    type: jsPsychInstructions,
+    pages: [instruction_format(`Great! Now, let's begin with the new round, with a new set of aliens. These aliens and their names will be completely different and are not related to the aliens you just learned about.
+      Just like earlier, you will learn the names for 8 brand new alien creatures. On each trial, you will see two aliens and hear and read two names. As before, you won't know at first which name goes with which alien because the names appear in random order. Try to figure out over time which name goes with which alien. Please do not write any information down - just do your best to remember and learn the names as you go. Remember that you'll hear the name for each of the two aliens and read them on the screen, but the order of the names will be completely random (so, for example, the first name that appears does not necessarily go with the left alien). Make sure your audio is still on, then click NEXT to start learning!`)], 
+    show_clickable_nav: true
+  });
 
 
-timeline.push(createTrainingPhase(blockOrder[1], 2)); 
-timeline.push(createSamplingPhase(blockOrder[1], 2));
-timeline.push(make_test_phase(blockOrder[1], 2)); 
+  timeline.push(createTrainingPhase(blockOrder[1], 2)); 
+  timeline.push(createSamplingPhase(blockOrder[1], 2));
+  timeline.push(make_test_phase(blockOrder[1], 2)); 
 
-// demographics 
-timeline.push({
-  type: jsPsychSurveyText,
-  questions: [
-    {prompt: '* <b>Age</b>',required: true, name: 'age'}, 
-    {prompt: '* <b>Gender</b>',required: true, name: 'gender'}, 
-    {prompt: '* <b>Is English your first/primary language?</b> (y/n)', required: true, name: 'L1'},
-    {prompt: '<i>(If you answered "no" to the question above)</i> <br>What is your first/primary language?', required: true, name: 'L1_non_enlgish'},
+  // demographics 
+  timeline.push({
+    type: jsPsychSurveyText,
+    questions: [
+      {prompt: '* <b>Age</b>',required: true, name: 'age'}, 
+      {prompt: '* <b>Gender</b>',required: true, name: 'gender'}, 
+      {prompt: '* <b>Is English your first/primary language?</b> (y/n)', required: true, name: 'L1'},
+      {prompt: '<i>(If you answered "no" to the question above)</i> <br>What is your first/primary language?', required: true, name: 'L1_non_enlgish'},
 
-    {prompt: 'What is your second language?<br>If not applicable, please write NA.', name: 'L2'},
-    {prompt: 'Please specify any other language(s) you speak in addition to the primary and secondary language.<br>If not applicable, please write NA.', name: 'other_langs'},
-  ]
+      {prompt: 'What is your second language?<br>If not applicable, please write NA.', name: 'L2'},
+      {prompt: 'Please specify any other language(s) you speak in addition to the primary and secondary language.<br>If not applicable, please write NA.', name: 'other_langs'},
+    ]
   
-});
+  });
 
 
-// end of experiment debrief
-timeline.push({
-  type: jsPsychInstructions,
-  pages: [instruction_format(`
-    <b>Thanks for participating!</b><br>
-    <br>This is an experiment in which you were asked to learn words by keeping track of which words occurred with which aliens across time. We are interested in how people represent uncertainty and make decisions about what to learn next.<br>
-    <br>Please click <i>End Study</i> to submit your responses. Please wait for the screen to say "Done" before you close this tab.`)], 
-  allow_backward: false, 
-  show_clickable_nav: true, 
-  button_label_next: "End Study"
-});
+  // end of experiment debrief
+  timeline.push({
+    type: jsPsychInstructions,
+    pages: [instruction_format(`
+      <b>Thanks for participating!</b><br>
+      <br>This is an experiment in which you were asked to learn words by keeping track of which words occurred with which aliens across time. We are interested in how people represent uncertainty and make decisions about what to learn next.<br>
+      <br>Please click <i>End Study</i> to submit your responses. Please wait for the screen to say "Done" before you close this tab.`)], 
+    allow_backward: false, 
+    show_clickable_nav: true, 
+    button_label_next: "End Study"
+  });
+}
 
 
-jsPsych.run(timeline);
+// ask DataPipe for a balanced condition assignment, then build and run the timeline for that condition
+async function createExperiment() {
+  let conditionIndex;
+  try {
+    conditionIndex = await jsPsychExtensionPipe.getCondition("hxixbjitXwxr");
+  } catch (error) {
+    document.body.innerHTML = "<p>The experiment could not be started.</p>";
+    throw error;
+  }
+
+  const assigned = conditionTable[conditionIndex];
+  if (!assigned) {
+    document.body.innerHTML = "<p>The experiment could not be started.</p>";
+    throw new Error("DataPipe returned condition " + conditionIndex + ", but conditionTable only has " + conditionTable.length + " entries");
+  }
+  passiveCondition = assigned.passiveCondition;
+  blockOrder = assigned.blockOrder;
+
+  const condition = blockOrder[0] + "_" + blockOrder[1];
+  jsPsych.data.addProperties({
+    subject_id: subject_id,
+    sona_id: sona_id,
+    condition: condition,
+    conditionIndex: conditionIndex,
+    passiveCondition: passiveCondition,
+    activeFirst: blockOrder[0] === "active"
+  });
+  console.log("condition: " + conditionIndex + " (" + condition + ")");
+
+  buildTimeline();
+  jsPsych.run(timeline);
+}
+createExperiment();
