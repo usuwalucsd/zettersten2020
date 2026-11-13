@@ -48,12 +48,11 @@ let blockOrder;
 
 var wordItems = ["beppo","biffer","deela","finna","guffi", "kita","leemu","manu", "noopy","pahvy", "roozer", "sibu","soma", "tesser","tibble","zeevo"];
 var imageItems = [29, 18, 10, 11, 12, 14, 17, 7, 8, 9, 4, 5, 6, 3, 2, 1];
-var audio_check_files = ['stimuli/audio1.m4a','stimuli/audio2.m4a','stimuli/audio3.m4a','stimuli/audio4.m4a'];
+var audio_check_files = ['stimuli/apple.m4a', 'stimuli/ball.m4a']
 
 // randomize the order of the words, images, and audio check items
 wordItems = jsPsych.randomization.shuffle(wordItems); 
 imageItems = jsPsych.randomization.shuffle(imageItems); 
-audio_check_files = jsPsych.randomization.shuffle(audio_check_files); 
 
 // randomly pair image and words to the stims dictionary
 // stims[i] = {image, word, audio}
@@ -131,43 +130,34 @@ var instructions = { // general instructions
 
 // auditory attention check
 // part of the exclusion criteria if participants do not identify the correct word 
-// that they hear in the audio 
-const audio_check = {
-  type: jsPsychSurveyHtmlForm,
-      preamble: function () {
-        return `<div style="text-align: left;">
-            <p>Click on the Play button to hear an audio recording. Then enter the word you heard. Click the<br>button to hear the sound again. Click on the Submit Answers button when you are finished.<br></p>
-            <button type="button" class="jspsych-btn" onclick="new Audio('${jsPsych.evaluateTimelineVariable('audio')}').play()">Play</button></div>`;
-      },
-      html: '<p style="text-align: left;"><textarea id="test-resp-box" name="response" style="resize: both;"></textarea></p>',
-      autofocus: 'test-resp-box',
-      button_label: "Submit Answers",
-      post_trial_gap: 500, 
-      data: {
-        audio: jsPsych.timelineVariable('audio')
-      },
-      on_finish: function (data) {
-        data.response = data.response.response;
+// that they hear in the audi
+var audio_check = {
+  timeline: [{
+    type: jsPsychSurveyHtmlForm,
+        preamble: function () {
+          return `<div style="text-align: left;">
+              <p>Click on the Play button to hear an audio recording. Then enter the word you heard. Click the<br>button to hear the sound again. Click on the Submit Answers button when you are finished.<br></p>
+              <button type="button" class="jspsych-btn" onclick="new Audio('${jsPsych.evaluateTimelineVariable('audio')}').play()">Play</button></div>`;
+        },
+        html: '<p style="text-align: left;"><textarea id="test-resp-box" name="response" style="resize: both;"></textarea></p>',
+        autofocus: 'test-resp-box',
+        button_label: "Submit Answers",
+        post_trial_gap: 500, 
+        data: {
+          audio: jsPsych.timelineVariable('audio')
+        },
+        on_finish: function (data) {
+          data.response = data.response.response;
+        }
       }
-}
-
-var audio_check_1 = {
-  timeline: [audio_check], 
+  ], 
   timeline_variables: [
     {audio: audio_check_files[0]},
     {audio: audio_check_files[1]},
   ], 
   randomize_order: true,
-}; taskIntro.push(audio_check_1);
+}; taskIntro.push(audio_check);
 
-var audio_check_2 = {
-  timeline: [audio_check], 
-  timeline_variables: [
-    {audio: audio_check_files[2]},
-    {audio: audio_check_files[3]},
-  ], 
-  randomize_order: true,
-};
 
 instructions = { // general instructions 
   type: jsPsychInstructions,
@@ -383,15 +373,12 @@ function buildTimeline() {
     show_clickable_nav: true
   });
 
-  timeline.push(audio_check_2);
-
   timeline.push({
     type: jsPsychInstructions,
     pages: [instruction_format(`Great! Now, let's begin with the new round, with a new set of aliens. These aliens and their names will be completely different and are not related to the aliens you just learned about.
       Just like earlier, you will learn the names for 8 brand new alien creatures. On each trial, you will see two aliens and hear and read two names. As before, you won't know at first which name goes with which alien because the names appear in random order. Try to figure out over time which name goes with which alien. Please do not write any information down - just do your best to remember and learn the names as you go. Remember that you'll hear the name for each of the two aliens and read them on the screen, but the order of the names will be completely random (so, for example, the first name that appears does not necessarily go with the left alien). Make sure your audio is still on, then click NEXT to start learning!`)], 
     show_clickable_nav: true
   });
-
 
   timeline.push(createTrainingPhase(blockOrder[1], 2)); 
   timeline.push(createSamplingPhase(blockOrder[1], 2));
