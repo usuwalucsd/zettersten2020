@@ -363,9 +363,37 @@ var jsPsychSampling = (function (jspsych) {
 
 
 
+            // claude debug for frozen trials: if the AudioContext is suspended, "ended" never fires, the player is never reset,
+            // and the next play() of the same word throws "cannot call start more than once". play_word resets on "ended" as before,
+            // and if play() throws it stop()s the player (which gives it a fresh source node) and retries once; if that also fails
+            // the word is shown silently rather than hanging the trial.
+            const play_word = (player) => {
+                const start = () => {
+                    const on_ended = () => {
+                        player.removeEventListener("ended", on_ended);
+                        player.stop();
+                    };
+                    // stop() swaps in a new source node, so the listener is (re)attached right before each play()
+                    player.addEventListener("ended", on_ended);
+                    player.play();
+                };
+                try {
+                    start();
+                } catch (e) {
+                    try {
+                        player.stop();
+                        start();
+                    } catch (e2) {
+                        console.warn("audio playback failed; continuing without sound", e2);
+                    }
+                }
+            };
+
             // as in jspsych-learning: each word fades in, its audio plays, it stays for `duration`, then fades out;
             // the selected alien's word comes first if selected_word_first, otherwise the random alien's word does
             const present_words = async () => {
+                // resume the AudioContext in case the browser suspended it (no-op when it is already running)
+                this.jsPsych.pluginAPI.audioContext();
                 const chosen = trial.stimuli_set[chosen_index];
                 const random = trial.stimuli_set[random_index];
                 const words = trial.selected_word_first ? [chosen, random] : [random, chosen];
@@ -379,13 +407,7 @@ var jsPsychSampling = (function (jspsych) {
                     await fade_word(1);
                     // claude debug for audio buffer error: players are cached per audio file and a web audio source node can only be started once,
                     // so stop() once it finishes to give the player a fresh node for the next time this word is played
-                    const player = players[i];
-                    const on_ended = () => {
-                        player.removeEventListener("ended", on_ended);
-                        player.stop();
-                    };
-                    player.addEventListener("ended", on_ended);
-                    player.play();
+                    play_word(players[i]);
                     await wait(trial.duration);
                     // as in the original, the trial ends as soon as the second word's hold is over
                     if (i < words.length - 1) {
