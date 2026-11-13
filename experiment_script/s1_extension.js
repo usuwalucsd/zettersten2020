@@ -286,10 +286,16 @@ function createSamplingPhase(samplingType, currentRound) {
     // which item's word is heard first, balanced 2/2 across the 4 passive trials (as in the active round)
     const selectedWordFirst = jsPsych.randomization.repeat([true, false], numSamplingTrialsPerBlock / 2);
 
+    // the passive pairs are presented in a random order (shuffled once per phase), so the position of a pair
+    // (e.g. the ambiguous pair in passiveMid) is not confounded with the kind of information it gives.
+    // shuffle the indices rather than the pairs so each trial can record which pair of the condition's list it showed
+    const conditionPairs = (passiveCondition === 'passiveMax') ? passiveMax : (passiveCondition === 'passiveMid') ? passiveMid : passiveMin;
+    const pairOrder = jsPsych.randomization.shuffle(conditionPairs.map((_, index) => index));
+
     for (let i =0; i < numSamplingBlocks; i++) {
       for (let j =0; j < numSamplingTrialsPerBlock; j++) {
-        const samplingPairs = (passiveCondition === 'passiveMax') ? passiveMax : (passiveCondition === 'passiveMid') ? passiveMid : passiveMin;
-        const currentStimuliPair = samplingPairs[j];
+        const pairIndex = pairOrder[j];
+        const currentStimuliPair = conditionPairs[pairIndex];
 
         // pairs index into the unshuffled set, so indices 0-3 are the ambiguous items and 4-7 the disambiguated ones (as in specifiedStim);
         // the shuffled stimuliSet is only used for the order of the aliens on the screen
@@ -305,8 +311,13 @@ function createSamplingPhase(samplingType, currentRound) {
             learning_2: stimuli2,
             learning_1_location: location1, 
             learning_2_location: location2, 
-            learning_1_word_first: selectedWordFirst[j], 
-            data: {block: i+1, samplingTrial: j+1, round: currentRound, round_condition: samplingType}
+            learning_1_word_first: selectedWordFirst[j],
+            data: {
+              block: i+1, samplingTrial: j+1, round: currentRound, round_condition: samplingType,
+              passive_pair_index: pairIndex,                      // which pair of the condition's list (0-3, in the order it is defined) was shown
+              passive_pair: currentStimuliPair.join("-"),         // the pair itself, as item indices (0-3 ambiguous, 4-7 disambiguated)
+              passive_pair_order: pairOrder.join("-")             // the full shuffled order for this phase
+            }
 
           };
           samplingPhase.push(passiveSamplingTrial);
