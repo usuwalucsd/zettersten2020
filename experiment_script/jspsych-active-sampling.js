@@ -304,8 +304,9 @@ var jsPsychSampling = (function (jspsych) {
                     element.style.visibility = "visible";
                     element.style.opacity = 1;
                 });
-                await wait(FADE_MS);
+                // START can be clicked as soon as the container is visible, so start the clock here (not after the fade)
                 learning_start_time = performance.now();
+                await wait(FADE_MS);
             };
 
             // the word display fades in or out via its css opacity transition (WORD_FADE_MS)
