@@ -147,7 +147,14 @@ Data preparation following the analysis plan.
 #### Load Relevant Libraries and Functions
 
 # run once
+
 # install.packages(c('tidyverse', 'lme4', 'here', 'AICcmodavg'))
+            
+#Catherine's comments: need to explicitly install each package to run the libraries 
+install.packages('lme4')
+install.packages('here')
+install.packages('tidyverse')
+install.packages('AICcmodavg')
 
 library(lme4)
 library(here)
@@ -159,6 +166,8 @@ library(AICcmodavg)
 ``` {r}
 #### Import data
 read_path  <- here::here("..", "data")
+#remember to upload preprocessed data, data did not load at first due to missing preprocessed data. Ensure that all packages are installed beforehand as well, check renv.lock for this as well. 
+
 d <- read.csv(file.path(read_path, "Zettersten2020_replication_preprocessed_data.csv"))
 
 #### Data exclusion / filtering
